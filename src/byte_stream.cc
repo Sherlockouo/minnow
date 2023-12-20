@@ -8,70 +8,88 @@ ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ) {}
 
 void Writer::push( string data )
 {
-  // Your code here.
-  (void)data;
+  // no capacity or data is empty
+  if(available_capacity() == 0 || !data.size()) return;
+  
+  // capacity is smaller than data's length
+  auto n = min(available_capacity(),data.size());
+  if(n != data.size())
+    data = data.substr(0,n);
+  buffer.push(data);
+  pushed_bytes += n;
+  buffered_bytes += n;
 }
 
 void Writer::close()
 {
-  // Your code here.
+  is_closed_ = true;
 }
 
 void Writer::set_error()
 {
-  // Your code here.
+  has_error_ = true;
 }
 
 bool Writer::is_closed() const
 {
-  // Your code here.
-  return {};
+  return is_closed_;
 }
 
 uint64_t Writer::available_capacity() const
 {
-  // Your code here.
-  return {};
+  return capacity_ - buffered_bytes;
 }
 
 uint64_t Writer::bytes_pushed() const
 {
-  // Your code here.
-  return {};
+  return pushed_bytes;
 }
 
 string_view Reader::peek() const
 {
-  // Your code here.
-  return {};
+  if(buffer.empty()){
+    return {};
+  }
+  string_view res = buffer.front();
+  return res;
 }
 
 bool Reader::is_finished() const
 {
-  // Your code here.
-  return {};
+  return is_closed_ && buffered_bytes == 0;
 }
 
 bool Reader::has_error() const
 {
-  // Your code here.
-  return {};
+  return has_error_;
 }
 
 void Reader::pop( uint64_t len )
 {
-  // Your code here.
-  (void)len;
+  auto poplen = min(len,buffered_bytes);
+  while(poplen > 0){
+    auto &front = buffer.front();
+    if(front.size() > poplen){
+      front = front.substr(poplen);
+      poped_bytes += poplen;
+      buffered_bytes -= poplen;
+      break;
+    }
+    else{
+      poplen -= front.size();
+      poped_bytes += front.size();
+      buffered_bytes -= front.size();
+      buffer.pop();
+    }
+  }
 }
 
 uint64_t Reader::bytes_buffered() const
 {
-  // Your code here.
-  return {};
+  return buffered_bytes;
 }
 
 uint64_t Reader::bytes_popped() const
 {
-  // Your code here.
-  return {};
+ return poped_bytes;
 }
