@@ -1,11 +1,23 @@
 #pragma once
 
 #include "byte_stream.hh"
-
+#include <map>
 #include <string>
+#include <iostream>
 
 class Reassembler
 {
+protected:
+  // penging bytes
+  uint64_t bytes_pending_ { 0 };
+
+  // the streams index
+  uint64_t stream_index_ { 0 };
+
+  bool is_finished_ {false};
+
+  std::map<int, std::string,std::less<int>> buffer {};
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
