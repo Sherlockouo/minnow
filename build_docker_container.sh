@@ -1,0 +1,1 @@
+docker run  -d -it --name cs144 --mount type=bind,source="$(pwd)"/,target=/app stanford-cs144:latest

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "byte_stream.hh"
-#include <map>
-#include <string>
+#include <unordered_map>
 #include <iostream>
+#include <cstring>
 
 class Reassembler
 {
@@ -16,7 +16,8 @@ protected:
 
   bool is_finished_ {false};
 
-  std::map<int, std::string,std::less<int>> buffer {};
+  // only keep those which can be written
+  std::unordered_map<uint64_t, char> buffer {};
 
 public:
   /*

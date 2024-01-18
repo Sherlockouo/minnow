@@ -1,0 +1,1 @@
+docker build --load -t stanford-cs144 .  

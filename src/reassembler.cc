@@ -4,53 +4,58 @@ using namespace std;
 
 void Reassembler::insert( uint64_t first_index, string data, bool is_last_substring, Writer& output )
 {
-  std::cout << "params " << data << " " << first_index << " " << is_last_substring << " " << stream_index_ << " "
-            << buffer.size() << std::endl;
-
+  
   // If this is the last substring, mark the reassembler as finished.
   if ( is_last_substring ) {
     is_finished_ = is_last_substring;
   }
 
-  if ( first_index + data.size() > stream_index_) {
+  //drop 
+  if (data.size() + first_index < stream_index_ && !is_last_substring) return;
+  uint64_t start_idx_ = first_index;
+  // overlap
+ if (first_index < stream_index_ &&  first_index + data.size() > stream_index_) {
     data = data.substr( stream_index_ - first_index );
+    start_idx_ = stream_index_; 
   }
+
   data = data.substr( 0, output.available_capacity() );
+  
+  if ( data.size() + bytes_pending_ > output.available_capacity() && !is_last_substring && start_idx_ > stream_index_)
+  return;
 
-  if ( data.size() + bytes_pending_ > output.available_capacity() )
-    return;
-
-  if ( first_index + data.size() > stream_index_) {
-    buffer[stream_index_] = data;
-    bytes_pending_ += data.size();
-  } 
-  // else {
-  //   if ( first_index + data.size() > stream_index_ ) {
-
-  //     buffer[first_index] = data;
-  //     bytes_pending_ += data.size();
-  //   }
-  // }
-
-  std::cout << "capacity " << buffer.size() << " " << output.available_capacity() << std::endl;
+  // write to assembler's buffer
+  for(uint64_t i = start_idx_; i < start_idx_ + data.size(); i++){
+    // avoid the overlapped buffer
+    if(i < stream_index_) continue;
+    auto result = buffer.emplace(i, data[i - start_idx_]);
+    if(result.second) { // 如果插入成功，那么增加 bytes_pending_
+      bytes_pending_ ++;
+    }
+  }
 
   while ( !buffer.empty() && !output.is_closed() && output.available_capacity() > 0 ) {
-    if ( buffer.find( stream_index_ ) == buffer.end() ) {
+    auto it = buffer.find( stream_index_ );
+    if ( it == buffer.end() ) {
       break;
     }
-
-    auto& str = buffer[stream_index_];
-    auto pushlen = str.size();
-    std::cout << "str " << str << std::endl;
-
-    output.push( str );
-    // output.push( str );
-    // bytes_pending_ -= pushlen;
-    bytes_pending_ -= pushlen;
-    buffer.erase( stream_index_ );
-    stream_index_ += pushlen;
+    
+    output.push( string(1,it->second) );
+    bytes_pending_ --;
+    buffer.erase( it );
+    stream_index_ ++;
+    
+    if (is_finished_ && buffer.empty()) {
+      buffer.clear();
+      output.close();
+      return;
+    }
+  }
+  if(stream_index_ != 0){
+  std::cout<< " first_index " << first_index <<" buffer size: "<<buffer.size()<<" stream_index_ "<<stream_index_ <<" is_finished_ "<<is_finished_<<std::endl;
   }
   if ( is_finished_ && !buffer.size() ) {
+    buffer.clear();
     output.close();
   }
 }

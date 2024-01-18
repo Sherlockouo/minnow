@@ -5,7 +5,7 @@ FROM ubuntu:24.04
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y git cmake gdb build-essential clang \
+RUN apt-get update --fix-missing && apt-get install -y git cmake gdb build-essential clang \
   clang-tidy clang-format gcc-doc pkg-config glibc-doc tcpdump
 
 # GCC 12
